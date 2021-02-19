@@ -11,7 +11,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using ASPNETAOP_WebServer.Models;
 
+//runs on localhost:44316
 namespace ASPNETAOP_WebServer
 {
     public class Startup
@@ -28,6 +31,20 @@ namespace ASPNETAOP_WebServer
         {
 
             services.AddControllers();
+            services.AddDbContext<SessionContext>(opt =>
+                                               opt.UseInMemoryDatabase("SessionList"));
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("MyPolicy",
+                builder =>
+                {
+                    builder.WithOrigins("https://localhost:44363")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ASPNETAOP_WebServer", Version = "v1" });
@@ -44,6 +61,7 @@ namespace ASPNETAOP_WebServer
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ASPNETAOP_WebServer v1"));
             }
 
+            app.UseCors("MyPolicy");
             app.UseHttpsRedirection();
 
             app.UseRouting();
