@@ -9,7 +9,7 @@ using ASPNETAOP_WebServer.Models;
 
 namespace ASPNETAOP_WebServer.Controllers
 {
-    [Route("api/SessionItems")]
+    [Route("api/[controller]")]
     [ApiController]
     public class SessionItemsController : ControllerBase
     {
@@ -80,7 +80,7 @@ namespace ASPNETAOP_WebServer.Controllers
             _context.SessionItems.Add(sessionItem);
             await _context.SaveChangesAsync();
 
-           // return CreatedAtAction("GetSessionItem", new { id = sessionItem.Id }, sessionItem);
+            //return CreatedAtAction("GetSessionItem", new { id = sessionItem.Id }, sessionItem);
             return CreatedAtAction(nameof(GetSessionItem), new { id = sessionItem.Id }, sessionItem);
         }
 

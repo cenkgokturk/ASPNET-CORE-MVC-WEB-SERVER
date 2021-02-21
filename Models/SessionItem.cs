@@ -8,7 +8,14 @@ namespace ASPNETAOP_WebServer.Models
     public class SessionItem
     {
         public long Id { get; set; }
-        public string Name { get; set; }
-        public bool IsComplete { get; set; }
+
+        //Information from AccountInfo table in AccountDb
+        public int UserID { get; set; }
+        public string Username { get; set; }
+        public string Usermail { get; set; }
+
+        //Information from UserRoles table in AccountDb
+        public int Roleid { get; set; }
+
     }
 }
