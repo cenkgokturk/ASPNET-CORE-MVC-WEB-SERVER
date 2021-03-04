@@ -79,20 +79,15 @@ namespace ASPNETAOP_WebServer.Controllers
             return NoContent();
         }
 
-        // POST: api/UserLoginItems
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<UserLoginItem>> PostUserLoginItem(UserLoginItem userLoginItem)
+        //Retrieve the UserID of the given User 
+        private int GetUserID(String Usermail)
         {
-            
-
-            int isUserLoggedIn = 0;
+            int UserID = -1;
 
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
+                string sqlquery = "select UserID  from AccountInfo where Usermail = '" + Usermail + "' ";
                 using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
                 {
                     sqlconn.Open();
@@ -102,19 +97,95 @@ namespace ASPNETAOP_WebServer.Controllers
                     {
                         while (reader.Read())
                         {
-                            if (reader.GetString(0).Equals(userLoginItem.Userpassword)){
-                                userLoginItem.isUserLoggedIn = 1; 
-                            }    //Password correct - Successful Login
-                            else{ userLoginItem.isUserLoggedIn = 2; }   //Password not correct - Login denied
+                            UserID = reader.GetInt32(0);
                         }
                     }
-                    else
-                    {
-                        userLoginItem.isUserLoggedIn = 3; //User not found - Login denied
-                    }
-                    reader.Close();
+
+                    sqlconn.Close();
                 }
             }
+            return UserID;
+        }
+
+        // Add a new entity to the UserRoles with the given user
+        private void AddUserRole(int UserID)
+        {
+            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+            using (SqlConnection sqlconn = new SqlConnection(connection))
+            {
+                // Number 2 for the Roleid indicates RegularUser
+                string sqlquery = "insert into UserRoles(UserID, Roleid) values ('" + UserID + "', 2)";
+                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                {
+                    sqlconn.Open();
+                    sqlcomm.ExecuteNonQuery();
+                }
+            }
+        }
+
+        // POST: api/UserLoginItems
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<UserLoginItem>> PostUserLoginItem(UserLoginItem userLoginItem)
+        {
+            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
+            if (userLoginItem.isUserLoggedIn == 4)
+            {
+                // Add a new user to the database
+                using (SqlConnection sqlconn = new SqlConnection(connection))
+                {
+                    string sqlquery = "insert into AccountInfo(Username, Usermail, Userpassword) values ('" + userLoginItem.Username + "', '" + userLoginItem.Usermail + "', '" + userLoginItem.Userpassword + "' )";
+                    using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                    {
+                        sqlconn.Open();
+                        sqlcomm.ExecuteNonQuery();
+                        sqlconn.Close();
+
+                        // retrieve the UserID of the newly created user
+                        int UserID = GetUserID(userLoginItem.Usermail);
+
+                        // define a standart permission
+                        AddUserRole(UserID);
+                    }
+                }
+            }
+            else
+            {
+                int isUserLoggedIn = 0;
+
+                using (SqlConnection sqlconn = new SqlConnection(connection))
+                {
+                    string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
+                    using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                    {
+                        sqlconn.Open();
+                        SqlDataReader reader = sqlcomm.ExecuteReader();
+
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                //Password correct - Successful Login
+                                if (reader.GetString(0).Equals(userLoginItem.Userpassword))
+                                {
+                                    userLoginItem.isUserLoggedIn = 1;
+                                    //Add the session info the table
+                                }   
+                                else { userLoginItem.isUserLoggedIn = 2; }   //Password not correct - Login denied
+                            }
+                        }
+                        else
+                        {
+                            userLoginItem.isUserLoggedIn = 3; //User not found - Login denied
+                        }
+                        reader.Close();
+                    }
+                }
+            }
+
+
+            
 
             _context.UserLoginItems.Add(userLoginItem);
             await _context.SaveChangesAsync();

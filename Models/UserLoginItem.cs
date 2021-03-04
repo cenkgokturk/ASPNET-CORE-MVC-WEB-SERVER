@@ -16,6 +16,7 @@ namespace ASPNETAOP_WebServer.Models
         //1 - Sucessfully logged in
         //2 - Password not correct
         //3 - User not found
+        //4 - User register
         public int isUserLoggedIn { get; set; }
     }
 }
