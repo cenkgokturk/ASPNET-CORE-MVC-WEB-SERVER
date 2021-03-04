@@ -5,19 +5,17 @@ using System.Threading.Tasks;
 
 namespace ASPNETAOP_WebServer.Models
 {
-    public class SessionItem
+    public class UserLoginItem
     {
         public long Id { get; set; }
-
-        //Information from AccountInfo table in AccountDb
-        public int UserID { get; set; }
         public string Username { get; set; }
         public string Usermail { get; set; }
+        public string Userpassword { get; set; }
 
-        //Information from UserRoles table in AccountDb
-        public int Roleid { get; set; }
-
-        public string SessiondId { get; set; }
-
+        //0 - Request has been send
+        //1 - Sucessfully logged in
+        //2 - Password not correct
+        //3 - User not found
+        public int isUserLoggedIn { get; set; }
     }
 }

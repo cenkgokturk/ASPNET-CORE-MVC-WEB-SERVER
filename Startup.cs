@@ -34,6 +34,9 @@ namespace ASPNETAOP_WebServer
             services.AddDbContext<SessionContext>(opt =>
                                                opt.UseInMemoryDatabase("SessionList"));
 
+            services.AddDbContext<UserLoginContext>(opt =>
+                                               opt.UseInMemoryDatabase("UserLoginList"));
+
             services.AddCors(options =>
             {
                 options.AddPolicy("MyPolicy",
