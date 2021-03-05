@@ -123,6 +123,23 @@ namespace ASPNETAOP_WebServer.Controllers
             }
         }
 
+        private void AddUserSessions(UserLoginItem userLoginItem)
+        {
+            String connection = _configuration.GetConnectionString("localDatabase");
+            using (SqlConnection sqlconn = new SqlConnection(connection))
+            {
+                DateTime thisDay = DateTime.Now;
+                //Date format is 30/3/2020 12:00 AM
+                //Number at the end indicates 0 for Logged Out & 1 for Logged in
+                string sqlQuerySession = "insert into AccountSessions(Usermail, LoginDate, IsLoggedIn) values ('" + userLoginItem.Usermail + "', '" + thisDay.ToString("g") + "', 1 )";
+                using (SqlCommand sqlcommCookie = new SqlCommand(sqlQuerySession, sqlconn))
+                {
+                    sqlconn.Open();
+                    sqlcommCookie.ExecuteNonQuery();
+                }
+            }
+        }
+
         // POST: api/UserLoginItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -147,6 +164,9 @@ namespace ASPNETAOP_WebServer.Controllers
 
                         // define a standart permission
                         AddUserRole(UserID);
+
+                        // Add the user session for logging
+                        AddUserSessions(userLoginItem);
                     }
                 }
             }
@@ -166,21 +186,21 @@ namespace ASPNETAOP_WebServer.Controllers
                         {
                             while (reader.Read())
                             {
-                                //Password correct - Successful Login
+                                // Password correct - Successful Login
                                 if (reader.GetString(0).Equals(userLoginItem.Userpassword))
                                 {
                                     userLoginItem.isUserLoggedIn = 1;
 
                                     userLoginItem.Username = reader.GetString(2);
                                     userLoginItem.UserRole = reader.GetInt32(3);
-                                    //Add the session info the table
+                                    // Add the session info the table
                                 }   
-                                else { userLoginItem.isUserLoggedIn = 2; }   //Password not correct - Login denied
+                                else { userLoginItem.isUserLoggedIn = 2; }   // Password not correct - Login denied
                             }
                         }
                         else
                         {
-                            userLoginItem.isUserLoggedIn = 3; //User not found - Login denied
+                            userLoginItem.isUserLoggedIn = 3; // User not found - Login denied
                         }
                         reader.Close();
                     }
@@ -205,6 +225,17 @@ namespace ASPNETAOP_WebServer.Controllers
             if (userLoginItem == null)
             {
                 return NotFound();
+            }
+
+            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+            using (SqlConnection sqlconn = new SqlConnection(connection))
+            {
+                string sqlquery = "UPDATE AccountSessions SET IsLoggedIn = 0 WHERE IsLoggedIn = 1;";
+                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                {
+                    sqlconn.Open();
+                    sqlcomm.ExecuteNonQuery();
+                }
             }
 
             _context.UserLoginItems.Remove(userLoginItem);
