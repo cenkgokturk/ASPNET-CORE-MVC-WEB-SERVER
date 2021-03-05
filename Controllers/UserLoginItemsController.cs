@@ -170,6 +170,9 @@ namespace ASPNETAOP_WebServer.Controllers
                                 if (reader.GetString(0).Equals(userLoginItem.Userpassword))
                                 {
                                     userLoginItem.isUserLoggedIn = 1;
+
+                                    userLoginItem.Username = reader.GetString(2);
+                                    userLoginItem.UserRole = reader.GetInt32(3);
                                     //Add the session info the table
                                 }   
                                 else { userLoginItem.isUserLoggedIn = 2; }   //Password not correct - Login denied
