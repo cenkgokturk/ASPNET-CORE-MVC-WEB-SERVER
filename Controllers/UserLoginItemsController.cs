@@ -125,13 +125,13 @@ namespace ASPNETAOP_WebServer.Controllers
 
         private void AddUserSessions(UserLoginItem userLoginItem)
         {
-            String connection = _configuration.GetConnectionString("localDatabase");
+            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 DateTime thisDay = DateTime.Now;
                 //Date format is 30/3/2020 12:00 AM
                 //Number at the end indicates 0 for Logged Out & 1 for Logged in
-                string sqlQuerySession = "insert into AccountSessions(Usermail, LoginDate, IsLoggedIn) values ('" + userLoginItem.Usermail + "', '" + thisDay.ToString("g") + "', 1 )";
+                string sqlQuerySession = "insert into AccountSessions(UserId, LoginDate, IsLoggedIn) values ('" + userLoginItem.UserID + "', '" + thisDay + "', 1 )";
                 using (SqlCommand sqlcommCookie = new SqlCommand(sqlQuerySession, sqlconn))
                 {
                     sqlconn.Open();
@@ -164,9 +164,6 @@ namespace ASPNETAOP_WebServer.Controllers
 
                         // define a standart permission
                         AddUserRole(UserID);
-
-                        // Add the user session for logging
-                        AddUserSessions(userLoginItem);
                     }
                 }
             }
@@ -191,9 +188,15 @@ namespace ASPNETAOP_WebServer.Controllers
                                 {
                                     userLoginItem.isUserLoggedIn = 1;
 
+                                    userLoginItem.UserID = reader.GetInt32(1);
                                     userLoginItem.Username = reader.GetString(2);
                                     userLoginItem.UserRole = reader.GetInt32(3);
-                                    // Add the session info the table
+
+                                    DateTime thisDay = DateTime.Now;
+                                    userLoginItem.LoginDate = thisDay;
+
+                                    // Add the user session for logging
+                                    AddUserSessions(userLoginItem);
                                 }   
                                 else { userLoginItem.isUserLoggedIn = 2; }   // Password not correct - Login denied
                             }
