@@ -40,6 +40,16 @@ namespace ASPNETAOP_WebServer.Controllers
         {
             var userLoginItem = await _context.UserLoginItems.FindAsync(id);
 
+            await Task.Delay(200);
+
+            //Compare current time with the last accessed time
+            if(userLoginItem != null)
+            {
+                DateTime timeAccessed = DateTime.Now;
+                TimeSpan span = timeAccessed.Subtract(userLoginItem.LoginDate);
+            }
+            
+
             if (userLoginItem == null)
             {
                 return NotFound();
@@ -147,71 +157,40 @@ namespace ASPNETAOP_WebServer.Controllers
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
-            if (userLoginItem.isUserLoggedIn == 4)
+            using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                // Add a new user to the database
-                using (SqlConnection sqlconn = new SqlConnection(connection))
+                string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
+                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
                 {
-                    string sqlquery = "insert into AccountInfo(Username, Usermail, Userpassword) values ('" + userLoginItem.Username + "', '" + userLoginItem.Usermail + "', '" + userLoginItem.Userpassword + "' )";
-                    using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                    sqlconn.Open();
+                    SqlDataReader reader = sqlcomm.ExecuteReader();
+
+                    if (reader.HasRows)
                     {
-                        sqlconn.Open();
-                        sqlcomm.ExecuteNonQuery();
-                        sqlconn.Close();
-
-                        // retrieve the UserID of the newly created user
-                        int UserID = GetUserID(userLoginItem.Usermail);
-
-                        // define a standart permission
-                        AddUserRole(UserID);
-                    }
-                }
-            }
-            else
-            {
-                int isUserLoggedIn = 0;
-
-                using (SqlConnection sqlconn = new SqlConnection(connection))
-                {
-                    string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
-                    using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
-                    {
-                        sqlconn.Open();
-                        SqlDataReader reader = sqlcomm.ExecuteReader();
-
-                        if (reader.HasRows)
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            // Password correct - Successful Login
+                            if (reader.GetString(0).Equals(userLoginItem.Userpassword))
                             {
-                                // Password correct - Successful Login
-                                if (reader.GetString(0).Equals(userLoginItem.Userpassword))
-                                {
-                                    userLoginItem.isUserLoggedIn = 1;
+                                userLoginItem.isUserLoggedIn = 1;
 
-                                    userLoginItem.UserID = reader.GetInt32(1);
-                                    userLoginItem.Username = reader.GetString(2);
-                                    userLoginItem.UserRole = reader.GetInt32(3);
+                                userLoginItem.UserID = reader.GetInt32(1);
+                                userLoginItem.Username = reader.GetString(2);
+                                userLoginItem.UserRole = reader.GetInt32(3);
 
-                                    DateTime thisDay = DateTime.Now;
-                                    userLoginItem.LoginDate = thisDay;
+                                DateTime thisDay = DateTime.Now;
+                                userLoginItem.LoginDate = thisDay;
 
-                                    // Add the user session for logging
-                                    AddUserSessions(userLoginItem);
-                                }   
-                                else { userLoginItem.isUserLoggedIn = 2; }   // Password not correct - Login denied
-                            }
+                                // Add the user session for logging
+                                AddUserSessions(userLoginItem);
+                            }   
                         }
-                        else
-                        {
-                            userLoginItem.isUserLoggedIn = 3; // User not found - Login denied
-                        }
-                        reader.Close();
                     }
+
+                    reader.Close();
                 }
             }
 
-
-            
 
             _context.UserLoginItems.Add(userLoginItem);
             await _context.SaveChangesAsync();
@@ -233,7 +212,7 @@ namespace ASPNETAOP_WebServer.Controllers
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                string sqlquery = "UPDATE AccountSessions SET IsLoggedIn = 0 WHERE IsLoggedIn = 1;";
+                string sqlquery = "DELETE FROM AccountSessions WHERE UserID = '" + userLoginItem.UserID + "' ";
                 using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
                 {
                     sqlconn.Open();
