@@ -156,4 +156,3 @@ C:\Users\Cenk\source\repos\ASPNETAOP-WebServer\obj\Debug\net5.0\ASPNETAOP-WebSer
 C:\Users\Cenk\source\repos\ASPNETAOP-WebServer\obj\Debug\net5.0\ref\ASPNETAOP-WebServer.dll
 C:\Users\Cenk\source\repos\ASPNETAOP-WebServer\obj\Debug\net5.0\ASPNETAOP-WebServer.pdb
 C:\Users\Cenk\source\repos\ASPNETAOP-WebServer\obj\Debug\net5.0\ASPNETAOP-WebServer.genruntimeconfig.cache
-C:\Users\Cenk\source\repos\ASPNETAOP-WebServer\obj\Debug\net5.0\ASPNETAOP-WebServer.csprojAssemblyReference.cache

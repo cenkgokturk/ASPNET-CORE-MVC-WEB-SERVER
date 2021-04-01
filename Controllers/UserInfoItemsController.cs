@@ -6,69 +6,53 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ASPNETAOP_WebServer.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using Microsoft.IdentityModel.Protocols;
-using System.Net.Http;
-using System.Net.Http.Json;
 
 namespace ASPNETAOP_WebServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserLoginItemsController : ControllerBase
+    public class UserInfoItemsController : ControllerBase
     {
-        private readonly UserLoginContext _context;
+        private readonly UserInfoContext _context;
 
-        private IConfiguration _configuration;
-
-        public UserLoginItemsController(UserLoginContext context)
+        public UserInfoItemsController(UserInfoContext context)
         {
             _context = context;
         }
 
-        // GET: api/UserLoginItems
+        // GET: api/UserInfoItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserLoginItem>>> GetUserLoginItems()
+        public async Task<ActionResult<IEnumerable<UserInfoItem>>> GetUserInfoItems()
         {
-            return await _context.UserLoginItems.ToListAsync();
+            return await _context.UserInfoItems.ToListAsync();
         }
 
-        // GET: api/UserLoginItems/5
+        // GET: api/UserInfoItems/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserLoginItem>> GetUserLoginItem(long id)
+        public async Task<ActionResult<UserInfoItem>> GetUserInfoItem(Guid id)
         {
-            var userLoginItem = await _context.UserLoginItems.FindAsync(id);
+            var userInfoItem = await _context.UserInfoItems.FindAsync(id);
 
-            await Task.Delay(200);
-
-            //Compare current time with the last accessed time
-            if(userLoginItem != null)
-            {
-                DateTime timeAccessed = DateTime.Now;
-                TimeSpan span = timeAccessed.Subtract(userLoginItem.LoginDate);
-            }
-            
-
-            if (userLoginItem == null)
+            if (userInfoItem == null)
             {
                 return NotFound();
             }
 
-            return userLoginItem;
+            return userInfoItem;
         }
 
-        // PUT: api/UserLoginItems/5
+        // PUT: api/UserInfoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUserLoginItem(long id, UserLoginItem userLoginItem)
+        public async Task<IActionResult> PutUserInfoItem(Guid id, UserInfoItem userInfoItem)
         {
-            if (id != userLoginItem.Id)
+            if (id != userInfoItem.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(userLoginItem).State = EntityState.Modified;
+            _context.Entry(userInfoItem).State = EntityState.Modified;
 
             try
             {
@@ -76,7 +60,7 @@ namespace ASPNETAOP_WebServer.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserLoginItemExists(id))
+                if (!UserInfoItemExists(id))
                 {
                     return NotFound();
                 }
@@ -133,7 +117,7 @@ namespace ASPNETAOP_WebServer.Controllers
             }
         }
 
-        private void AddUserSessions(UserLoginItem userLoginItem)
+        private void AddUserSessions(UserInfoItem userInfoItem)
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             using (SqlConnection sqlconn = new SqlConnection(connection))
@@ -141,9 +125,7 @@ namespace ASPNETAOP_WebServer.Controllers
                 DateTime thisDay = DateTime.Now;
                 //Date format is 30/3/2020 12:00 AM
 
-                Console.WriteLine("WebServer SessionId in AddUserSession -> " + userLoginItem.SessionID);
-
-                string sqlQuerySession = "insert into AccountSessions(UserId, SessionID, LoginDate) values ('" + userLoginItem.UserID + "', '" + userLoginItem.SessionID + "', '" + thisDay + "' )";
+                string sqlQuerySession = "insert into AccountSessions(UserId, SessionID, LoginDate) values ('" + userInfoItem.UserID + "', '" + userInfoItem.Id + "', '" + thisDay + "' )";
                 using (SqlCommand sqlcommCookie = new SqlCommand(sqlQuerySession, sqlconn))
                 {
                     sqlconn.Open();
@@ -152,16 +134,16 @@ namespace ASPNETAOP_WebServer.Controllers
             }
         }
 
-        // POST: api/UserLoginItems
+        // POST: api/UserInfoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<UserLoginItem>> PostUserLoginItem(UserLoginItem userLoginItem)
+        public async Task<ActionResult<UserInfoItem>> PostUserInfoItem(UserInfoItem userInfoItem)
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
+                string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userInfoItem.Usermail + "' ";
                 using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
                 {
                     sqlconn.Open();
@@ -172,20 +154,19 @@ namespace ASPNETAOP_WebServer.Controllers
                         while (reader.Read())
                         {
                             // Password correct - Successful Login
-                            if (reader.GetString(0).Equals(userLoginItem.Userpassword))
+                            if (reader.GetString(0).Equals(userInfoItem.Userpassword))
                             {
-                                userLoginItem.isUserLoggedIn = 1;
 
-                                userLoginItem.UserID = reader.GetInt32(1);
-                                userLoginItem.Username = reader.GetString(2);
-                                userLoginItem.UserRole = reader.GetInt32(3);
+                                userInfoItem.UserID = reader.GetInt32(1);
+                                userInfoItem.Username = reader.GetString(2);
+                                userInfoItem.UserRole = reader.GetInt32(3);
 
                                 DateTime thisDay = DateTime.Now;
-                                userLoginItem.LoginDate = thisDay;
+                                userInfoItem.LoginDate = thisDay;
 
                                 // Add the user session for logging
-                                AddUserSessions(userLoginItem);
-                            }   
+                                AddUserSessions(userInfoItem);
+                            }
                         }
                     }
 
@@ -193,20 +174,18 @@ namespace ASPNETAOP_WebServer.Controllers
                 }
             }
 
-
-            _context.UserLoginItems.Add(userLoginItem);
+            _context.UserInfoItems.Add(userInfoItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUserLoginItem), new { id = userLoginItem.Id }, userLoginItem);
-
+            return CreatedAtAction(nameof(GetUserInfoItem), new { id = userInfoItem.Id }, userInfoItem);
         }
 
-        // DELETE: api/UserLoginItems/5
+        // DELETE: api/UserInfoItems/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUserLoginItem(long id)
+        public async Task<IActionResult> DeleteUserInfoItem(Guid id)
         {
-            var userLoginItem = await _context.UserLoginItems.FindAsync(id);
-            if (userLoginItem == null)
+            var userInfoItem = await _context.UserInfoItems.FindAsync(id);
+            if (userInfoItem == null)
             {
                 return NotFound();
             }
@@ -214,7 +193,7 @@ namespace ASPNETAOP_WebServer.Controllers
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                string sqlquery = "DELETE FROM AccountSessions WHERE UserID = '" + userLoginItem.UserID + "' ";
+                string sqlquery = "DELETE FROM AccountSessions WHERE UserID = '" + userInfoItem.UserID + "' ";
                 using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
                 {
                     sqlconn.Open();
@@ -222,15 +201,15 @@ namespace ASPNETAOP_WebServer.Controllers
                 }
             }
 
-            _context.UserLoginItems.Remove(userLoginItem);
+            _context.UserInfoItems.Remove(userInfoItem);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool UserLoginItemExists(long id)
+        private bool UserInfoItemExists(Guid id)
         {
-            return _context.UserLoginItems.Any(e => e.Id == id);
+            return _context.UserInfoItems.Any(e => e.Id == id);
         }
     }
 }

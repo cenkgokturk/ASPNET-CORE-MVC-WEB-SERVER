@@ -37,6 +37,9 @@ namespace ASPNETAOP_WebServer
             services.AddDbContext<UserLoginContext>(opt =>
                                                opt.UseInMemoryDatabase("UserLoginList"));
 
+            services.AddDbContext<UserInfoContext>(opt =>
+                                               opt.UseInMemoryDatabase("UserInfoList"));
+
             services.AddDbContext<UserRegisterContext>(opt =>
                                                opt.UseInMemoryDatabase("UserRegisterList"));
 
