@@ -17,6 +17,8 @@ namespace ASPNETAOP_WebServer.Controllers
     {
         private readonly UserRegisterContext _context;
 
+        private String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
         public UserRegisterItemsController(UserRegisterContext context)
         {
             _context = context;
@@ -77,8 +79,7 @@ namespace ASPNETAOP_WebServer.Controllers
         private int GetUserID(String Usermail)
         {
             int UserID = -1;
-
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+            
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 string sqlquery = "select UserID  from AccountInfo where Usermail = '" + Usermail + "' ";
@@ -104,8 +105,6 @@ namespace ASPNETAOP_WebServer.Controllers
         // Give a standart role to the newly added user
         private void AddUserRole(int UserID)
         {
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 sqlconn.Open();
@@ -125,8 +124,7 @@ namespace ASPNETAOP_WebServer.Controllers
         [HttpPost]
         public async Task<ActionResult<UserRegisterItem>> PostUserRegisterItem(UserRegisterItem userRegisterItem)
         {
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-
+            //Add user info to AccountInfo table
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 sqlconn.Open();
@@ -140,6 +138,9 @@ namespace ASPNETAOP_WebServer.Controllers
                     cmd.ExecuteNonQuery();
                 }
             }
+
+            //Give the user a default permission
+            AddUserRole(GetUserID(userRegisterItem.Usermail));
 
             _context.UserRegisterItems.Add(userRegisterItem);
             await _context.SaveChangesAsync();

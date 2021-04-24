@@ -21,6 +21,8 @@ namespace ASPNETAOP_WebServer.Controllers
     {
         private readonly UserLoginContext _context;
 
+        private String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
         private IConfiguration _configuration;
 
         public UserLoginItemsController(UserLoginContext context)
@@ -90,39 +92,8 @@ namespace ASPNETAOP_WebServer.Controllers
             return NoContent();
         }
 
-        //Retrieve the UserID of the given User 
-        private int GetUserID(String Usermail)
-        {
-            int UserID = -1;
-
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-            using (SqlConnection sqlconn = new SqlConnection(connection))
-            {
-                string sqlquery = "select UserID  from AccountInfo where Usermail = '" + Usermail + "' ";
-                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
-                {
-                    sqlconn.Open();
-                    SqlDataReader reader = sqlcomm.ExecuteReader();
-
-                    if (reader.HasRows)
-                    {
-                        while (reader.Read())
-                        {
-                            UserID = reader.GetInt32(0);
-                        }
-                    }
-
-                    sqlconn.Close();
-                }
-            }
-
-            return UserID;
-        }
-
         private void AddUserSessions(UserLoginItem userLoginItem)
         {
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 DateTime thisDay = DateTime.Now;
@@ -150,8 +121,6 @@ namespace ASPNETAOP_WebServer.Controllers
         [HttpPost]
         public async Task<ActionResult<UserLoginItem>> PostUserLoginItem(UserLoginItem userLoginItem)
         {
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 string sqlquery = "select AI.Userpassword, AI.UserID, AI.Username, UR.Roleid  from AccountInfo AI, UserRoles UR where AI.UserID = UR.UserID AND AI.Usermail = '" + userLoginItem.Usermail + "' ";
@@ -204,7 +173,6 @@ namespace ASPNETAOP_WebServer.Controllers
                 return NotFound();
             }
 
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 string sqlquery = "DELETE FROM AccountSessions WHERE UserID = '" + userLoginItem.UserID + "' ";
