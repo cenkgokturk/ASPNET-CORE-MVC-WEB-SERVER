@@ -11,6 +11,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Protocols;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Data;
 
 namespace ASPNETAOP_WebServer.Controllers
 {
@@ -114,40 +115,32 @@ namespace ASPNETAOP_WebServer.Controllers
                     sqlconn.Close();
                 }
             }
-            return UserID;
-        }
 
-        // Add a new entity to the UserRoles with the given user
-        private void AddUserRole(int UserID)
-        {
-            String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-            using (SqlConnection sqlconn = new SqlConnection(connection))
-            {
-                // Number 2 for the Roleid indicates RegularUser
-                string sqlquery = "insert into UserRoles(UserID, Roleid) values ('" + UserID + "', 2)";
-                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
-                {
-                    sqlconn.Open();
-                    sqlcomm.ExecuteNonQuery();
-                }
-            }
+            return UserID;
         }
 
         private void AddUserSessions(UserLoginItem userLoginItem)
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
                 DateTime thisDay = DateTime.Now;
-                //Date format is 30/3/2020 12:00 AM
 
-                Console.WriteLine("WebServer SessionId in AddUserSession -> " + userLoginItem.SessionID);
-
-                string sqlQuerySession = "insert into AccountSessions(UserId, SessionID, LoginDate) values ('" + userLoginItem.UserID + "', '" + userLoginItem.SessionID + "', '" + thisDay + "' )";
-                using (SqlCommand sqlcommCookie = new SqlCommand(sqlQuerySession, sqlconn))
+                sqlconn.Open();
+                string sql = "insert into AccountSessions(UserId, SessionID, LoginDate) values(@UserId,@SessionID,@LoginDate)";
+                using (SqlCommand cmd = new SqlCommand(sql, sqlconn))
                 {
-                    sqlconn.Open();
-                    sqlcommCookie.ExecuteNonQuery();
+                    cmd.Parameters.Add("@UserID", SqlDbType.Int).Value = userLoginItem.UserID;
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@SessionID",
+                        SqlDbType = SqlDbType.UniqueIdentifier,
+                        Value = userLoginItem.SessionID
+                    });
+                    cmd.Parameters.Add("@LoginDate", SqlDbType.DateTime).Value = thisDay;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.ExecuteNonQuery();
                 }
             }
         }

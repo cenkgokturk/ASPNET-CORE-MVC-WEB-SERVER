@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ASPNETAOP_WebServer.Models;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ASPNETAOP_WebServer.Controllers
 {
@@ -104,14 +105,17 @@ namespace ASPNETAOP_WebServer.Controllers
         private void AddUserRole(int UserID)
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                // Number 2 for the Roleid indicates RegularUser
-                string sqlquery = "insert into UserRoles(UserID, Roleid) values ('" + UserID + "', 2)";
-                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                sqlconn.Open();
+                string sql = "insert into UserRoles(UserID, Roleid) values(@ID,@Role)";
+                using (SqlCommand cmd = new SqlCommand(sql, sqlconn))
                 {
-                    sqlconn.Open();
-                    sqlcomm.ExecuteNonQuery();
+                    cmd.Parameters.Add("@ID", SqlDbType.Int).Value = UserID;
+                    cmd.Parameters.Add("@Role", SqlDbType.Int).Value = 2;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.ExecuteNonQuery();
                 }
             }
         }
@@ -123,25 +127,21 @@ namespace ASPNETAOP_WebServer.Controllers
         {
             String connection = "Server=DESKTOP-II1M7LK;Database=AccountDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
-            // Add a new user to the database
             using (SqlConnection sqlconn = new SqlConnection(connection))
             {
-                string sqlquery = "insert into AccountInfo(Username, Usermail, Userpassword) values ('" + userRegisterItem.Username + "', '" + userRegisterItem.Usermail + "', '" + userRegisterItem.Userpassword + "' )";
-                using (SqlCommand sqlcomm = new SqlCommand(sqlquery, sqlconn))
+                sqlconn.Open();
+                string sql = "insert into AccountInfo(Username, Usermail, Userpassword) values(@Username,@Usermail,@Userpassword)";
+                using (SqlCommand cmd = new SqlCommand(sql, sqlconn))
                 {
-                    sqlconn.Open();
-                    sqlcomm.ExecuteNonQuery();
-                    sqlconn.Close();
-
-                    // retrieve the UserID of the newly created user
-                    int UserID = GetUserID(userRegisterItem.Usermail);
-
-                    // define a standart permission
-                    AddUserRole(UserID);
+                    cmd.Parameters.Add("@Username", SqlDbType.NVarChar).Value = userRegisterItem.Username;
+                    cmd.Parameters.Add("@Usermail", SqlDbType.NVarChar).Value = userRegisterItem.Usermail;
+                    cmd.Parameters.Add("@Userpassword", SqlDbType.NVarChar).Value = userRegisterItem.Userpassword;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.ExecuteNonQuery();
                 }
             }
 
-                _context.UserRegisterItems.Add(userRegisterItem);
+            _context.UserRegisterItems.Add(userRegisterItem);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetUserRegisterItem), new { id = userRegisterItem.Id }, userRegisterItem);
